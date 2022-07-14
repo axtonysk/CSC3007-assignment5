@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC3007 - Assignment 5</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.js"></script>
+    <style>
+    #map {
+        width: 1000px;
+        height: 600px;
+    }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+</body>
+
+<script>
+
+fetch('https://api.data.gov.sg/v1/environment/psi')
+.then(response => response.json())
+.then(data => {
+
+    console.log(data);
+    retrievedData = data.region_metadata
+    psiData = data.items[0].readings.psi_twenty_four_hourly;
+    console.log(psiData)
+    console.log(retrievedData);
+
+    let tiles = new L.tileLayer('https://maps-{s}.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
+    detectRetina: true,
+    maxZoom: 18,
+    minZoom: 11,
+    //Do not remove this attribution
+    attribution:
+        '<img src="https://docs.onemap.sg/maps/images/oneMap64-01.png" style="height:20px;width:20px;">' +
+        'New OneMap | Map data © contributors, <a href="http://SLA.gov.sg">Singapore Land Authority</a>'
+    });
+
+    let map = new L.Map('map', {
+    center: [1.347833, 103.809357],
+    zoom: 12,
+    maxBounds: L.latLngBounds(L.latLng(1.1, 103.5), L.latLng(1.5, 104.3))})
+    .addLayer(tiles);
+
+    for(const regionData in retrievedData) {
+
+        //console.log(retrievedData[regionData]);
+        //console.log(retrievedData[regionData]['name'])
+        //console.log(retrievedData[regionData]['label_location']['latitude'])
+        //console.log(retrievedData[regionData]['label_location']['longitude'])
+        latitude = retrievedData[regionData]['label_location']['latitude']
+        longitude = retrievedData[regionData]['label_location']['longitude']
+
+        if(retrievedData[regionData]['name'] != 'national') {
+            var circle = L.circle([latitude, longitude], {
+                color: 'teal',
+                fillColor: 'teal',
+                fillOpacity: 0.5,
+                radius: 2500})
+                .bindPopup("I am a circle.")
+                .addTo(map);
+
+        }
+}
+    var marker = L.marker([1.33, 103.7])
+    .bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup()
+    .addTo(map);
+
+});
+
+
+/* ASSIGNMENT 1
+async function getData() {
+    try {
+        let response = await fetch('https://api.data.gov.sg/v1/environment/psi');
+        return await response.json();
+    } catch (error) {
+        console.log(error);
+    }
+}
+async function renderData() {
+    let retrievedData = await getData();
+
+    updateTimestamp = retrievedData.items[0].update_timestamp;
+    datetime = new Date(updateTimestamp);
+    $("#lastUpdated").text("Last Updated on "+datetime);
+
+    keys = Object.keys(retrievedData.items[0].readings);
+    psiData = retrievedData.items[0].readings;
+    $tbody = $('#psiTable').find('tbody');
+    
+    keys.forEach(key => {
+        $tbody.append("<tr><td>"+key+"</td><td>"+psiData[key].national+
+            "</td><td>"+psiData[key].central+"</td><td>"+psiData[key].west+
+            "</td><td>"+psiData[key].east+"</td><td>"+psiData[key].north+
+            "</td><td>"+psiData[key].south+"</td></tr>");
+    });
+}
+renderData();
+*/
+</script>
+</html>
