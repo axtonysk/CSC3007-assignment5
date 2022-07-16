@@ -13,6 +13,10 @@
         width: 1000px;
         height: 600px;
     }
+    .circle-with-txt {
+        font-weight: bold;
+        font-size: 20px;
+    }
     </style>
 </head>
 <body>
@@ -25,12 +29,9 @@ fetch('https://api.data.gov.sg/v1/environment/psi')
 .then(response => response.json())
 .then(data => {
 
-    console.log(data);
     retrievedData = data.region_metadata
     psiData = data.items[0].readings.psi_twenty_four_hourly;
-    console.log(psiData)
-    console.log(retrievedData);
-
+    
     let tiles = new L.tileLayer('https://maps-{s}.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
     detectRetina: true,
     maxZoom: 18,
@@ -49,59 +50,40 @@ fetch('https://api.data.gov.sg/v1/environment/psi')
 
     for(const regionData in retrievedData) {
 
-        //console.log(retrievedData[regionData]);
-        //console.log(retrievedData[regionData]['name'])
-        //console.log(retrievedData[regionData]['label_location']['latitude'])
-        //console.log(retrievedData[regionData]['label_location']['longitude'])
         latitude = retrievedData[regionData]['label_location']['latitude']
         longitude = retrievedData[regionData]['label_location']['longitude']
 
         if(retrievedData[regionData]['name'] != 'national') {
-            var circle = L.circle([latitude, longitude], {
-                color: 'teal',
-                fillColor: 'teal',
-                fillOpacity: 0.5,
-                radius: 2500})
-                .bindPopup("I am a circle.")
-                .addTo(map);
-
+            circleWithText([latitude, longitude], psiData[retrievedData[regionData]['name']])
+            .addTo(map);
         }
-}
-    var marker = L.marker([1.33, 103.7])
-    .bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup()
-    .addTo(map);
-
+    }
 });
 
+// https://gis.stackexchange.com/questions/360293/add-something-into-l-circlemarker
+function circleWithText(latLng, txt) {
 
-/* ASSIGNMENT 1
-async function getData() {
-    try {
-        let response = await fetch('https://api.data.gov.sg/v1/environment/psi');
-        return await response.json();
-    } catch (error) {
-        console.log(error);
+    // color of circle based on PSI value
+    if(txt <= 25) {
+        circleOptions = {radius:60, color: 'green', fillColor: 'green', fillOpacity: 0.5}
+    } else if(txt >= 26 && txt <= 35) {
+        circleOptions = {radius:60, color: 'orange', fillColor: 'orange', fillOpacity: 0.5}
+    } else {
+        circleOptions = {radius:60, color: 'red', fillColor: 'red', fillOpacity: 0.5}
     }
-}
-async function renderData() {
-    let retrievedData = await getData();
 
-    updateTimestamp = retrievedData.items[0].update_timestamp;
-    datetime = new Date(updateTimestamp);
-    $("#lastUpdated").text("Last Updated on "+datetime);
-
-    keys = Object.keys(retrievedData.items[0].readings);
-    psiData = retrievedData.items[0].readings;
-    $tbody = $('#psiTable').find('tbody');
-    
-    keys.forEach(key => {
-        $tbody.append("<tr><td>"+key+"</td><td>"+psiData[key].national+
-            "</td><td>"+psiData[key].central+"</td><td>"+psiData[key].west+
-            "</td><td>"+psiData[key].east+"</td><td>"+psiData[key].north+
-            "</td><td>"+psiData[key].south+"</td></tr>");
-    });
+  var icon = L.divIcon({
+    html: '<div class="txt">' + txt + '</div>',
+    className: 'circle-with-txt',
+    iconSize: [20, 25]
+  });
+  var circle = L.circleMarker(latLng, circleOptions);
+  var marker = L.marker(latLng, {
+    icon: icon
+  });
+  var group = L.layerGroup([circle, marker]);
+  return(group);
 }
-renderData();
-*/
+
 </script>
 </html>
